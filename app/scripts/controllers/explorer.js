@@ -528,7 +528,6 @@ angular.module('itemMirrorAngularDemoApp').controller('ExplorerCtrl', function (
                         indexOfNote.push(i);
                         currentAssoc.positionX = assoc.positionX + 5 + count % 3 * 155;
                         currentAssoc.positionY = assoc.positionY + 45 + Math.floor(count / 3) * 155;
-                        console.log(currentAssoc.positionX);
                         count++;
                     }
                 }
@@ -536,7 +535,7 @@ angular.module('itemMirrorAngularDemoApp').controller('ExplorerCtrl', function (
             console.log(indexOfNote.length);
             h = 45 + Math.ceil(indexOfNote.length / 3) * 155
             fileZoomIn.style.height = h + 'px';
-            console.log(fileZoomIn.style.height);
+            itemMirror.saveWithMirror($scope.currentKeyword);
         };
         
         $scope.zoomOut = function (assoc) {
@@ -560,6 +559,7 @@ angular.module('itemMirrorAngularDemoApp').controller('ExplorerCtrl', function (
             postPosX =[];
             postPosY =[];
             fileZoomIn = null;
+            itemMirror.saveWithMirror($scope.currentKeyword);
         };
         
         function zoomOuts() {
