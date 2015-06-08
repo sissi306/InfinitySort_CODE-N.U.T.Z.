@@ -1,116 +1,239 @@
-<div class="row">
+<!--the head of the application and the tags of all the diagrams the users have-->
+<div class="header p">
 
-  <!-- Association Listing Section -->
-  <div class="col-md-4">
-    <h2>{{mirror.displayName}}</h2>
+  <div class="col-md-2 logo">
+  <img src="../images/INFX598_GA_TITLE.jpg" >
+  </img>
+  </div>
+      <div ng-switch on="editSection" class="col-md-10 Diagramlist" >
+        <div class="diagram" ng-if= "diagram.isGrouping" ng-repeat = "diagram in mainAssociations" ng-click = "getCurrentAssociations($event, diagram)"
+          ng-style="{ 'background-color': diagram.customColor , 'border-bottom-color': diagram.borderColor}">
+          <p class = "col-md-10 diagramTitle" title="{{diagram.localItem }}" >{{diagram.localItem }}</p>
+          <button  ng-click = "deleteConfirm(diagram)" title="Delete Diagram" class="col-md-2 pull-right btn btn-link btn-xs" style="background-color:transparent"><span class="glyphicon glyphicon-remove"></span></button> 
+          
+        </div>
+        <div style="width:30px;background-color:transparent;padding:1px;border-color:transparent"><button ng-click = "addDiagramName= true" title="Add New Diagram" class="btn btn-link btn-xs" ><img src="../images/add139.png"/></button></div>
+      </div>   
+</div>
 
-  <button ng-click="previous()" class="btn btn-default btn-lg">Back</button>
+<div ng-hide = "mainAssociations" >
+  <div class="load-container" style="z-index:200">
+    <div class="loader">
+      Laoding...
+    </div>
+    <div class="center">Loading...</div>
+  </div>
+</div>
 
-    <div class="scroll">
-      <div ng-repeat="assoc in associations | filter:search.displayText"
-           ng-click="select(assoc)">
-        <div class="association"
-             ng-style="{ 'background-color': assoc.customColor }"
-             ng-class="{'selected': assoc.selected}">
-          <div class="row">
-            <div class="col-md-2">
-              <span ng-show="assoc.isGrouping" class="glyphicon glyphicon-folder-close"></span>
-              <span ng-show="assoc.isPhantom" class="glyphicon glyphicon-link"></span>
-              <span ng-show="!assoc.isGrouping" class="glyphicon glyphicon-file"></span>
+
+<div class="beforeEdit" ng-show = "mainAssociations && !associations"  >
+  <h3>Please Select A Diagram or Create A New One!</h3>
+</div>
+
+<!-- Loading Spinner -->
+<div ng-show="loading.isLoading">
+
+  <div class="load-container">
+    <div class="loader">
+      {{loading.loadInfo}}
+    </div>
+    <div class="center">{{loading.loadInfo}}</div>
+  </div>
+</div>
+
+<!-- Confirm popup windows of the creating diagram, deleting, reseting and cleanning function -->
+<div class="addName" ng-show="addDiagramName">
+  <div class="addNameDiv">
+  <div>New Diagram Name</div>
+    <input class="form-control" type="text" ng-model="diagramName">
+      </input>
+    <div class="addNameButton">
+      <button class="btn btn-success btn-mini b" ng-click="createDiagram(diagramName)"><span class="glyphicon glyphicon-ok"></span></button>
+      <button class="btn btn-mini b" ng-click="addDiagramName = false"><span class="glyphicon glyphicon-remove"></span></button>
+    </div>
+  </div>
+</div>
+
+<div class="addName" ng-if="deleteConfirmInfo">
+  <div class="addNameDiv" ng-if="deleteAssoc.isGrouping">
+    <div>Do you want to delete <b>{{deleteAssoc.localItem}}</b></div>
+    <div class="addNameButton">
+      <button class="btn btn-success btn-mini b" ng-click="deleteDiagram(deleteAssoc.guid)"><span class="glyphicon glyphicon-ok"></span></button>
+      <button class="btn btn-mini b" ng-click="confirmInfoReset(deleteConfirmInfo)"><span class="glyphicon glyphicon-remove"></span></button>
+    </div>
+  </div>
+  <div class="addNameDiv" ng-if="deleteAssoc.isPhantom">
+    <div>Do you want to delete <b>{{deleteAssoc.displayText}}</b> </div>
+    <div class="addNameButton">
+      <button class="btn btn-success btn-mini b" ng-click="deleteSubAssoc(deleteAssoc)"><span class="glyphicon glyphicon-ok"></span></button>
+      <button class="btn btn-mini b" ng-click="confirmInfoReset(deleteConfirmInfo)"><span class="glyphicon glyphicon-remove"></span></button>
+    </div>
+  </div> 
+</div>
+
+<div class="addName" ng-show="cleanConfirmInfo">
+  <div class="addNameDiv">
+    <div>Do you want to clean the notes?</div>
+    <div class="addNameButton">
+      <button class="btn btn-success btn-mini b" ng-click="clean()"><span class="glyphicon glyphicon-ok"></span></button>
+      <button class="btn btn-mini b" ng-click="confirmInfoReset(cleanConfirmInfo)"><span class="glyphicon glyphicon-remove"></span></button>
+    </div>
+  </div>
+</div>
+
+<div class="addName" ng-show="resetConfirmInfo">
+  <div class="addNameDiv">
+    <div>Do you want to reset the notes?</div>
+    <div class="addNameButton">
+      <button class="btn btn-success btn-mini b" ng-click="reset()"><span class="glyphicon glyphicon-ok"></span></button>
+      <button class="btn btn-mini b" ng-click="confirmInfoReset(resetConfirmInfo)"><span class="glyphicon glyphicon-remove"></span></button>
+    </div>
+  </div>  
+</div>
+
+
+
+<div ng-switch on="editSection" ng-show="associations">
+  
+  <table id="subcontainer">
+    <tr>
+      <!-- The side bar including sticky note box and category name box -->
+      <td class="subblock noteblock">
+      <div  class="labels" id="labels" ng-mouseup="MouseUp($event)" ng-mousemove="onMouseMove($event)"  >
+        <div class="sideBarTitle">
+          <h4 class="col-md-6">Category Name</h4>
+          <div class="col-md-6">
+            <button class="btn btn-link" ng-click="createLabel()"><img src="../images/battery172.png" title="Add New Category"/></button>
+          </div>
+        </div>
+        <div class="sideBarBox" style="height:73%">
+          <div  ng-repeat="assoc in associations" ng-if="assoc.positionX== 'unmoved' && assoc.type =='label'" 
+            class="association group"
+            draggable="true"  ng-mousedown="onMouseDown($event, assoc)" ng-mousemove="onMouseMove($event)" 
+            ng-class="{'selectednote': assoc.selected}" ng-click="select(assoc)"
+            ng-style="{ 'background-color': assoc.customColor , 'border-color': assoc.borderColor}" style="margin:3px 5px 3px 62px;">  
+            <div class="col-md-10 p">
+              <p class = "groupName" data-type="text" data-value="{{ assoc.displayText}}" data-placement="right">{{ assoc.displayText}}</p>
             </div>
-            <div class="col-md-10">
-              <h3>{{ matchFirstLn(assoc.displayText) }}</h3>
-              <a ng-show="assoc.isPhantom" ng-href="{{assoc.associatedItem}}">{{ assoc.associatedItem }}</a>
-            </div>
-          </div> <!-- row -->
-          <div class="row buttons" ng-show="assoc.selected">
-            <!-- Buttons -->
-            <div class="col-md-6">
-              <button class="btn btn-default" ng-click="navigate(assoc.guid)" ng-show="assoc.isGrouping">Enter</button>
-            </div>
-            <div class="col-md-6">
-              <button ng-click="deleteAssoc(assoc.guid)" class="pull-right btn btn-danger">DELETE</button>
+            <div class="col-md-2 p">
+              <button  ng-show="assoc.selected" ng-click="deleteConfirm(assoc)" class="pull-right btn btn-link btn-xs" style="background-color:transparent"><span class="glyphicon glyphicon-remove"></span></button> 
             </div>
           </div>
         </div>
       </div>
+        <div  class="notes" id="notes" ng-mouseup="MouseUp($event)" ng-mousemove="onMouseMove($event)">
+          <div class="sideBarTitle">
+            <h4 class="col-md-5">Sticky Notes</h4>
+          <div class="col-md-7">
+            <button class="btn btn-link" ng-click="createSubPhantom()"><img src="../images/add20-2.png" title="Add New Note"/></button>
+            <button class="btn btn-link"  ng-click="cleanConfirmInfo = true"><img src="../images/broom.png" title="Clear All Notes"></img></button>
+          </div>
+          </div>
+          <div class="sideBarBox" style="height:94%">
+            <div  ng-repeat="assoc in associations" ng-if="assoc.positionX== 'unmoved' && assoc.type =='note'" 
+        class="association alert alert-warning n note unmoved"
+         draggable="true"  ng-mousedown="onMouseDown($event, assoc)" ng-mousemove="onMouseMove($event)" 
+         ng-class="{'selected': assoc.selected}" ng-click="select(assoc)">  
+        <div style="height:24px">
+          <button  ng-show="assoc.selected" ng-click="deleteConfirm(assoc)" class="pull-right btn btn-link btn-xs" style="background-color:transparent">
+            <span class="glyphicon glyphicon-remove"></span>
+          </button> 
+        </div>
+          <div class="n" style="height:126px" ng-class="{'selected': assoc.selected}" ng-click="select(assoc)" >
+             <p class = "stickyName" data-type="textarea" data-value="{{ assoc.displayText}}" data-placement="right">{{ assoc.displayText}}</p>
+          </div>
+        </div>
+     </div>
+   </div>
+</td>
+      
+     
+    
+<!-- The whiteboard doing affinity diagram -->
+  <td class="subblock boardblock" >
+    <div class="subblockButton">
+      <button ng-click="resetConfirmInfo = true"><img src="../images/arrow61.png" title="Reset"/></button>
+      <button ng-click="save()"><img src="../images/save%20file2.png" title="Save"/></button>
     </div>
+    <div class=" whiteBoard m"  id="whiteBoard" ng-mouseup="onMouseUp($event)" ng-mousemove="onMouseMove($event)" >
+      <div ng-repeat="assoc in associations " ng-if="assoc.positionX!= 'unmoved'&& assoc.isPhantom"  >
+        <div class="dropdown"  ng-if="assoc.selected && assoc.type=='label'" ng-style="{'top':assoc.positionY+1+'px','left':assoc.positionX+150+'px'}">
+          <button class="btn btn-link btn-xs dropdown-toggle" id="menu1" type="button" data-toggle="dropdown" title="Edit Color">
+            <span class="glyphicon glyphicon-edit"></span></button>
+          <ul class="dropdown-menu colorChoice" aria-labelledby="menu1" >
+            <li><a style= 'background-color :#F9C5BB; ' ng-click = "changeColor(1,assoc)"></a></li>
+            <li><a style= 'background-color :#fed784; ' ng-click = "changeColor(2,assoc)"></a></li>
+            <li><a style= 'background-color :#A6DDAD; ' ng-click = "changeColor(3,assoc)"></a></li>
+            <li><a style= 'background-color :#C1A7D9; ' ng-click = "changeColor(4,assoc)"></a></li>  
+            <li><a style= 'background-color :#C0E4FE; ' ng-click = "changeColor(5,assoc)"></a></li>    
+            <li><a style= 'background-color :"white"; ' ng-click = "changeColor(6,assoc)"></a></li>    
+          </ul>
+        </div>
+        <div class="association group moved" ng-if="assoc.type =='label'"
+          ng-style="{ 'background-color': assoc.customColor , 'border-color': assoc.borderColor, 'left':assoc.positionX+'px','top':assoc.positionY+'px'}"
+          ng-class="{'selected': assoc.selected}" ng-click="select(assoc)" draggable="true" ng-mousedown="onMouseDown($event, assoc)" ng-mousemove="onMouseMove($event)" 
+          data-toggle="popover"  style="position:absolute">
+          <div class = "col-md-9 p" ng-hide="assoc.type =='note'" style="padding-right:0px">
+            <p class = "groupName" data-type="text" data-value="{{assoc.displayText}}" data-placement="right">{{assoc.displayText}}</p>
+            </div>
+              
+          <div class = "col-md-3 p" style="height:24px;padding:0px" ng-show="assoc.selected">
+            <div class=" col-md-4 groupEdit p"></div>
+            <div class=" col-md-4 groupEdit p">
+              <button class="btn btn-link btn-xs open" ng-click="zoomIn(assoc)"  ng-show="assoc.type =='label' && assoc.zoomedIn"><span class="glyphicon glyphicon-zoom-in"></span></button>
+              <button class="btn btn-link btn-xs open" ng-click="zoomOut(assoc)"  ng-show="assoc.type =='label' && !assoc.zoomedIn"><span class="glyphicon glyphicon-zoom-out"></span></button>
+            </div>
+            <div class="col-md-4 groupEdit p">
+              <button ng-click="deleteConfirm(assoc)" class="btn btn-link btn-xs" ><span class="glyphicon glyphicon-remove"></span></button>  
+            </div>
+            </div>   
+        </div>
+        <div class='labelBorder' style="display: none"></div>
+       
+
+        <div class="n note moved association alert alert-warning" ng-if="assoc.type =='note'"
+          ng-style="{ 'background-color': assoc.customColor, 'border-color': assoc.borderColor,  'left':assoc.positionX+'px','top':assoc.positionY+'px'}"
+            draggable="true"  ng-mousedown="onMouseDown($event, assoc)" ng-mousemove="onMouseMove($event)" ng-class="{'selectednote': assoc.selected}" ng-click="select(assoc)">
+            <div style="height:24px">
+              <button  ng-show="assoc.selected" ng-click="deleteConfirm(assoc)" class="pull-right btn btn-link btn-xs" style="background-color:transparent"><span class="glyphicon glyphicon-remove"></span></button> 
+              <div class=" col-md-4 dropdown p">
+                <button ng-show="assoc.selected" class="btn btn-link btn-xs dropdown-toggle" id="menu1" type="button" data-toggle="dropdown" title="Edit Color">
+                  <span class="glyphicon glyphicon-edit"></span></button>
+                <ul class="dropdown-menu colorChoice" aria-labelledby="menu1">
+                  <li><a style= 'background-color :#F9C5BB; ' ng-click = "changeColor(1,assoc)"></a></li>
+                  <li><a style= 'background-color :#fed784; ' ng-click = "changeColor(2,assoc)"></a></li>
+                  <li><a style= 'background-color :#A6DDAD; ' ng-click = "changeColor(3,assoc)"></a></li>
+                  <li><a style= 'background-color :#C1A7D9; ' ng-click = "changeColor(4,assoc)"></a></li>  
+                  <li><a style= 'background-color :#C0E4FE; ' ng-click = "changeColor(5,assoc)"></a></li>    
+                  <li><a style= 'background-color :#FCF8E3; ' ng-click = "changeColor(6,assoc)"></a></li>    
+                </ul>
+              </div>
+            </div>
+            <div class="n"  style="height:126px" ng-class="{'selected': assoc.selected}" >
+              <p class = "sticky" data-type="textarea" data-value="{{ assoc.displayText}}" data-placement="right">{{ assoc.displayText}}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+
+
+  </tr>
+      
+  </table>
+  
+  <div class="footer"> 
+    <p class="col-md-6 pull-right p" style="text-align: right;">Copyright by Lijuan Zhang, Teng Sun,Yunjie Zhou and Yuzhou Shen<br/>
+      Powered by itemMirror</p>
+    
+    <p class="col-md-6 p" style="text-size:0.5px">Icons made by <a href="http://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a>, 
+      <a href="http://www.flaticon.com/authors/pavel-kozlov" title="Pavel Kozlov">Pavel Kozlov</a>, 
+      <a href="http://www.flaticon.com/authors/yannick" title="Yannick">Yannick</a>,
+      <a href="http://www.flaticon.com/authors/nice-and-serious" title="Nice and Serious">Nice and Serious</a>,
+      <a href="http://www.flaticon.com/authors/catalin-fertu" title="Catalin Fertu">Catalin Fertu</a><br/>
+      from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0">CC BY 3.0</a></div></p>
+ 
+    
   </div>
-
-  <div class="col-md-6" ng-switch on="editSection">
-    <button class="btn-default btn btn-lg"
-            ng-click="editSection = 'assoc-editor'">Association Editor</button>
-    <button class="btn-default btn btn-lg"
-            ng-click="editSection = 'new-phantom'">Create Phantom</button>
-    <button class="btn-default btn btn-lg"
-            ng-click="editSection = 'new-folder'">Create Folder</button>
-
-  <!-- Association Editing Section -->
-  <div ng-switch-when="assoc-editor" class="association-editor">
-    <p class="lead" ng-hide="selectedAssoc">
-      Select an association to the left in order to edit it!
-    </p>
-    <div ng-if="selectedAssoc">
-      <h2>Editor</h2>
-
-      <h3>{{selectedAssoc.localItem}}</h3>
-
-      <textarea ng-model="selectedAssoc.displayText"></textarea>
-
-      <h2>Tags</h2>
-        <input type="text" ng-model="tagValue">
-        <button ng-click="selectedAssoc.addTag(tagValue)"><span class="glyphicon glyphicon-plus"></span></button>
-      <h3>Current Tags</h3>
-      <div class="tag" ng-repeat="tag in selectedAssoc.listTags()">{{tag}}
-        <button ng-click="selectedAssoc.deleteTag(tag)">
-          <span class="glyphicon glyphicon-remove"></span>
-        </button>
-      </div>
-
-      <!-- Creates a binding to the custom namespace attribute -->
-      <input type="color"
-             ng-model="selectedAssoc.customColor"
-             ng-model-options="{ getterSetter: true }">
-
-      <!-- This button resets the color by setting the value to null -->
-      <button ng-click="selectedAssoc.customColor = null">Reset Color</button>
-    </div>
-  </div>
-
-  <!-- Phantom Creation Section -->
-  <div ng-switch-when="new-phantom" class="phantom">
-    <h2>New Phantom</h2>
-      <form>
-        <label>Display Text</label>
-        <br/>
-        <textarea ng-model="phantomRequest.displayText"></textarea>
-        <br/>
-        <label>URL</label>
-        <br/>
-        <input ng-model="phantomRequest.itemURI" type="text">
-      </form>
-      <button ng-click="createPhantom()" class="btn btn-lg btn-default">Create</button>
-    </div>
-
-  <!-- Folder Creation Section -->
-  <div ng-switch-when="new-folder" class="folder">
-    <h2>New Folder</h2>
-      <form>
-        <label>Display Text</label>
-        <br/>
-        <textarea ng-model="folderRequest.displayText"></textarea>
-        <br/>
-        <label>Folder Name</label>
-        <br/>
-        <input ng-model="folderRequest.localItem" type="text">
-      </form>
-      <button ng-click="createFolder()" class="btn btn-lg btn-default">Create</button>
-    </div>
-  </div>
-
-  <div class="col-md-2">
-    <button ng-click="save()" class="btn btn-lg btn-success">Save</button>
-    <button ng-click="refresh()" class="btn btn-lg btn-success">Refresh</button>
-  </div>
-
-  </div>
+  
+</div>

@@ -34,6 +34,20 @@ angular.module('itemMirrorAngularDemoApp')
     // variables. For one way, you can just set a property
     var associations;
 
+    //Added by Jane
+    //an object of mirrorAndAssoc, with the same order as mirrors
+    //key is guid of the association of the mirror, value is mirrorAndAssoc
+    //for root mirror, key is "root"
+    //mirrorAndAssoc is an array of two element: mirror and associations
+    var mirrorsAndAssocs;
+    // An object to track whether the mirror of an association is ready
+    // Does not contain the root mirror
+    // key is the guid, value is true or false
+    var isCurMirrorReady;
+    //--Added by Jane
+    
+
+
     // This is the association wrapping function. In order to allow data
     // binding for custom namespace attributes they must be manually inserted
     // here. For writable attributes a getter / setter must be defined.
@@ -61,7 +75,23 @@ angular.module('itemMirrorAngularDemoApp')
         // Simple plain text attribute that stores a color for a given association
         get customColor(){ return mirror.getAssociationNamespaceAttribute('color', guid, 'im-angular-demo'); },
         set customColor(color){ mirror.setAssociationNamespaceAttribute('color', color, guid, 'im-angular-demo'); },
+        
+        get borderColor(){ return mirror.getAssociationNamespaceAttribute('bcolor', guid, 'im-angular-demo'); },
+        set borderColor(bcolor){ mirror.setAssociationNamespaceAttribute('bcolor', bcolor, guid, 'im-angular-demo'); },
 
+        
+        get positionX(){ return mirror.getAssociationNamespaceAttribute('posX', guid, 'im-angular-demo'); },
+        set positionX(posX){ mirror.setAssociationNamespaceAttribute('posX', posX, guid, 'im-angular-demo'); },
+
+        get positionY(){ return mirror.getAssociationNamespaceAttribute('posY', guid, 'im-angular-demo'); },
+        set positionY(posY){ mirror.setAssociationNamespaceAttribute('posY', posY, guid, 'im-angular-demo'); },
+        
+        get zoomedIn(){ return mirror.getAssociationNamespaceAttribute('z', guid, 'im-angular-demo'); },
+        set zoomedIn(z){ mirror.setAssociationNamespaceAttribute('z', z, guid, 'im-angular-demo'); },
+        
+        get type(){ return mirror.getAssociationNamespaceAttribute('t', guid, 'im-angular-demo'); },
+        set type(t){ mirror.setAssociationNamespaceAttribute('t', t, guid, 'im-angular-demo'); },
+        
         // These functions are all dealing with the private variable tags. This gives us a way to add,
         // delete, and list tags with an attribute. Internally these are represented as JSON and then these
         // methods are given to the associations to allow for easy manipulation as a directive.
@@ -92,6 +122,12 @@ angular.module('itemMirrorAngularDemoApp')
       associations = mirror.listAssociations().map(function(guid) {
         return assocWrapper(guid);
       });
+    }
+    
+    function updateAssociationsWithMirror(keyValue) {
+      var curMirror = mirrorsAndAssocs[keyValue][0];
+      var newAssociations = getNextAssociations(curMirror);
+      mirrorsAndAssocs[keyValue][1] = newAssociations;
     }
 
     // Used to construct the very first ItemMirror object in the root
@@ -166,10 +202,111 @@ angular.module('itemMirrorAngularDemoApp')
       return deferred.promise;
     }
 
+    //Added by Jane
+
+
+
+    //change from updateAssociations
+    function getNextAssociations(newMirror){
+      console.log('getting associations');
+      var nextAssociations;
+      nextAssociations = newMirror.listAssociations().map(function(guid) {
+        return assocWrapperWithMirror(guid, newMirror);
+      });
+      return nextAssociations;
+    }
+
+    //Pass a mirror for assicWrapper, so that the return value is mirror specific
+    function assocWrapperWithMirror(guid, myMirror) {
+
+      var result = myMirror.getAssociationNamespaceAttribute('tags', guid, 'im-angular-demo');
+      var tags = result ? JSON.parse(result) : {};
+      function saveTags() {
+        myMirror.setAssociationNamespaceAttribute('tags', JSON.stringify(tags), guid, 'im-angular-demo');
+      }
+
+      return {
+        guid: guid,
+        get displayText(){ return myMirror.getAssociationDisplayText(guid); },
+        set displayText(txt){ myMirror.setAssociationDisplayText(guid, txt); },
+        localItem: myMirror.getAssociationLocalItem(guid),
+        associatedItem: myMirror.getAssociationAssociatedItem(guid),
+        isGrouping: myMirror.isAssociationAssociatedItemGrouping(guid),
+        isPhantom: myMirror.isAssociationPhantom(guid),
+
+        // Simple plain text attribute that stores a color for a given association
+        get customColor(){ return myMirror.getAssociationNamespaceAttribute('color', guid, 'im-angular-demo'); },
+        set customColor(color){ myMirror.setAssociationNamespaceAttribute('color', color, guid, 'im-angular-demo'); },
+        
+        get borderColor(){ return myMirror.getAssociationNamespaceAttribute('bcolor', guid, 'im-angular-demo'); },
+        set borderColor(bcolor){ myMirror.setAssociationNamespaceAttribute('bcolor', bcolor, guid, 'im-angular-demo'); },
+
+        //The position namgespace 
+        get positionX(){ return myMirror.getAssociationNamespaceAttribute('posX', guid, 'im-angular-demo'); },
+        set positionX(posX){ myMirror.setAssociationNamespaceAttribute('posX', posX, guid, 'im-angular-demo'); },
+
+        get positionY(){ return myMirror.getAssociationNamespaceAttribute('posY', guid, 'im-angular-demo'); },
+        set positionY(posY){ myMirror.setAssociationNamespaceAttribute('posY', posY, guid, 'im-angular-demo'); },
+        
+        //The namespace reocrds whether the label is zoomed in or not.
+        get zoomedIn(){ return myMirror.getAssociationNamespaceAttribute('z', guid, 'im-angular-demo'); },
+        set zoomedIn(z){ myMirror.setAssociationNamespaceAttribute('z', z, guid, 'im-angular-demo'); },
+        
+        //The type namespace differentiat the note phantom and the category phantom.
+        get type(){ return myMirror.getAssociationNamespaceAttribute('t', guid, 'im-angular-demo'); },
+        set type(t){ myMirror.setAssociationNamespaceAttribute('t', t, guid, 'im-angular-demo'); },
+        
+        
+        
+        // These functions are all dealing with the private variable tags. This gives us a way to add,
+        // delete, and list tags with an attribute. Internally these are represented as JSON and then these
+        // methods are given to the associations to allow for easy manipulation as a directive.
+        addTag: function(tag) {
+          tags[tag] = true;
+          saveTags();
+        },
+
+        deleteTag: function(tag) {
+          delete tags[tag];
+          saveTags();
+        },
+
+        listTags: function() {
+          return Object.keys(tags);
+        }
+      };
+    }
+
+    //create new mirror and new associations, stored in mirrorsAndAssocs
+    //does not update the variable mirror and associations
+    //the new mirror is for association of the currentMirror
+    function createChildWithoutUpdate(currentMirror, guid) {
+      var deferred = $q.defer();
+      currentMirror.createItemMirrorForAssociatedGroupingItem(guid, function(error, newMirror) {
+        if (error) {
+          console.log(error);
+          deferred.reject(error);
+        }
+        else {
+          var newAssociations = getNextAssociations(newMirror);
+          var mirrorAndAssoc = [newMirror];
+          mirrorAndAssoc.push(newAssociations);
+          mirrorsAndAssocs[guid] = mirrorAndAssoc;
+          isCurMirrorReady[guid] = true;
+          deferred.resolve();
+        }
+      });
+
+      return deferred.promise;
+    }
+
+    //--Added by Jane
+
+
+
     return {
       save: function() {
         var deferred = $q.defer();
-
         mirror.save(function(error) {
           if (error) { deferred.reject(error); }
           else {
@@ -177,7 +314,6 @@ angular.module('itemMirrorAngularDemoApp')
             deferred.resolve();
           }
         });
-
         return deferred.promise;
       },
 
@@ -205,17 +341,118 @@ angular.module('itemMirrorAngularDemoApp')
           }
           else {
             // Add a new wrapped association
-            associations.push( assocWrapper(guid) );
+            var newAssoc=assocWrapper(guid);
+            newAssoc.customColor = "#efb218";
+            newAssoc.borderColor = "#efb218";
+            associations.push(  newAssoc );
+            deferred.resolve(guid);
+          }
+        });
+
+        return deferred.promise;
+      },
+      
+      saveWithMirror: function(keyValue) {
+        var deferred = $q.defer();
+        var curMirror = mirrorsAndAssocs[keyValue][0];
+        curMirror.save(function(error) {
+          if (error) { deferred.reject(error); }
+          else {
+            updateAssociationsWithMirror(keyValue);
             deferred.resolve();
           }
         });
 
         return deferred.promise;
       },
+      
+      deleteAssocWithMirror: function(keyValue, guid) {
+        var deferred = $q.defer();
+        var curMirror = mirrorsAndAssocs[keyValue][0];
+        var curAssociations = mirrorsAndAssocs[keyValue][1];
+        
+        curMirror.deleteAssociation(guid, function(error) {
+          if (error) {
+            deferred.reject(error);
+            console.log("assoc delete error: " + error);
+          }
+          else {
+            var guids = curAssociations.map(function(assoc) { return assoc.guid; });
+            var delIdx = guids.indexOf(guid);
+            // Removes the deleted association wrapper
+            curAssociations.splice(delIdx, 1);
+            curMirror.save(function(error) {
+              if (error) { deferred.reject(error); }
+              else {
+                updateAssociationsWithMirror(keyValue);
+                deferred.resolve();
+              }
+            });
+          }
+        });
+
+        return deferred.promise;
+      },
+      //Edited by Jane
+      
+      
+      //Edited by Sissi
+      createSubPhantom : function(keyword,t,px,py, options){
+      var deferred = $q.defer();
+      console.log(keyword);
+      var currentMirror =  mirrorsAndAssocs[ keyword ][0];
+      var currentAssociations = mirrorsAndAssocs[keyword ][1];
+      currentMirror.createAssociation(options, function(error, guid) {
+          if (error) {
+            deferred.reject(error);
+            console.log(error);
+          }
+          else {
+            var newAssoc =  assocWrapperWithMirror(guid,currentMirror);
+            newAssoc.positionX = px;
+            newAssoc.positionY = py;
+            newAssoc.type = t;
+            // Add a new wrapped association
+            currentAssociations.push( newAssoc );
+            deferred.resolve();
+          }
+        });
+
+        return deferred.promise;
+          
+      },
+      
+      createLabel : function(keyword,t,px, py, options){
+      var deferred = $q.defer();
+      var currentMirror =  mirrorsAndAssocs[ keyword ][0];
+      var currentAssociations = mirrorsAndAssocs[keyword ][1];
+      currentMirror.createAssociation(options, function(error, guid) {
+          if (error) {
+            deferred.reject(error);
+            console.log(error);
+          }
+          else {
+            var newAssoc =  assocWrapperWithMirror(guid,currentMirror);
+            
+            newAssoc.positionX = px;
+            newAssoc.positionY = py;
+            newAssoc.type = t;
+            newAssoc.customColor = "white";
+            newAssoc.borderColor = "#4b3181";
+            newAssoc.zoomedIn = true;
+            // Add a new wrapped association
+            currentAssociations.push( newAssoc );
+            deferred.resolve();
+          }
+        });
+
+        return deferred.promise;
+          
+      },
+
 
       deleteAssociation: function(guid) {
-        console.log('Delete Association Called');
-        console.log('GUID: ' + guid);
+
         var deferred = $q.defer();
 
         mirror.deleteAssociation(guid, function(error) {
@@ -235,6 +472,10 @@ angular.module('itemMirrorAngularDemoApp')
 
         return deferred.promise;
       },
+      //Edited by Sissi
+      
+      
+
 
       // This function will attempt to navigate to the specified
       // associated item's mirror. It first will see the URI exists
@@ -256,7 +497,6 @@ angular.module('itemMirrorAngularDemoApp')
           updateAssociations();
           deferred.resolve();
         } else {
-          console.log('creating child');
           createChild(guid).
             then(function() {
               deferred.resolve();
@@ -275,7 +515,7 @@ angular.module('itemMirrorAngularDemoApp')
 
         // The guid should NOT change, but we need to pass it in. The
         // itemMirror method should be updated
-        mirror.renameAssociationLocalItem(guid, function(error, newGuid) {
+        mirror.renameAssociationLocalItem(guid,name, function(error, newGuid) {
           if (error) { deferred.reject(error); }
           else {
             var guids = associations.map(function(guid) { return guid; });
@@ -289,6 +529,9 @@ angular.module('itemMirrorAngularDemoApp')
 
         return deferred.promise;
       },
+      
+      
+     
 
       // Returns the association wrappers for use within a
       // controller. Note that we use a getter, because the
@@ -309,7 +552,14 @@ angular.module('itemMirrorAngularDemoApp')
         then(function(rootMirror) {
           mirror = rootMirror;
           mirrors = [rootMirror];
+
           updateAssociations();
+          //added by Jane
+          //to initialize associationsArr
+          mirrorsAndAssocs = {};
+          mirrorsAndAssocs['root'] = [mirror,associations];
+          isCurMirrorReady = {};
+          //--Added by Jane
         }),
 
       // Calls the getCreator method of the itemMirror and sets it to that mirror if it isn't null. It's basically a way to go back.
@@ -324,6 +574,29 @@ angular.module('itemMirrorAngularDemoApp')
 
         return deferred.promise;
       },
+
+      //Added by Jane
+
+        //create mirror for an association of current mirror
+        //the association must be a grouping association
+      createSubMirror: function(currentMirror, guidOfAssoc){
+        var deferred = $q.defer();
+        createChildWithoutUpdate(currentMirror, guidOfAssoc).then(function() {
+            deferred.resolve();
+            }, function(error) {
+            deferred.reject(error);
+            });
+        return deferred.promise;
+      },
+
+      getMirrorsAndAssocs: function(){
+        return mirrorsAndAssocs;
+      },
+
+      getIsCurrentMirrorReady: function() {
+        return isCurMirrorReady;
+      },
+      //--Added by Jane
 
     };
   }]);

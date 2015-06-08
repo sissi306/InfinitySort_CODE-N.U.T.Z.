@@ -8,6 +8,10 @@
  *
  * Main module of the application.
  */
+ 
+
+
+
 angular
   .module('itemMirrorAngularDemoApp', [
     'ngAnimate',
